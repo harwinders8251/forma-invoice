@@ -25,6 +25,7 @@ import { InvoiceFormData, CustomField, InvoiceItem } from "@/lib/schemas";
 import {
   calculateInvoiceTotals,
   CalculatedInvoiceTotals,
+  formatCurrency,
 } from "@/lib/invoice-calculations";
 import {
   saveInvoiceAction,
@@ -292,10 +293,23 @@ export function InvoiceEditor({
     }));
   };
 
-  // Custom field handlers
+  // Custom field limits & handlers
+  const MAX_CUSTOM_FIELDS = 10;
+  const MAX_CUSTOM_FIELD_LABEL = 40;
+  const MAX_CUSTOM_FIELD_VALUE = 80;
+
   const addCustomFieldWithPreset = (presetLabel?: string, presetValue?: string) => {
+    if (formData.custom_fields.length >= MAX_CUSTOM_FIELDS) {
+      setToast({
+        type: "error",
+        title: "Limit Reached",
+        message: `Maximum of ${MAX_CUSTOM_FIELDS} custom fields allowed per invoice.`,
+      });
+      return;
+    }
+
     const existingLabels = formData.custom_fields.map((f) => f.label.trim().toLowerCase());
-    let defaultLabel = presetLabel || "Payment Method";
+    let defaultLabel = (presetLabel || "Payment Method").slice(0, MAX_CUSTOM_FIELD_LABEL);
     if (!presetLabel) {
       if (!existingLabels.includes("po number")) defaultLabel = "PO Number";
       else if (!existingLabels.includes("project code")) defaultLabel = "Project Code";
@@ -304,9 +318,9 @@ export function InvoiceEditor({
     }
 
     const newField: CustomField = {
-      id: `cf-${Date.now()}`,
+      id: `cf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       label: defaultLabel,
-      value: presetValue || "",
+      value: (presetValue || "").slice(0, MAX_CUSTOM_FIELD_VALUE),
       isVisible: true,
     };
     setFormData((prev) => ({
@@ -320,9 +334,17 @@ export function InvoiceEditor({
   const updateCustomField = (id: string, updates: Partial<CustomField>) => {
     setFormData((prev) => ({
       ...prev,
-      custom_fields: prev.custom_fields.map((f) =>
-        f.id === id ? { ...f, ...updates } : f
-      ),
+      custom_fields: prev.custom_fields.map((f) => {
+        if (f.id !== id) return f;
+        const updated = { ...f, ...updates };
+        if (typeof updated.label === "string" && updated.label.length > MAX_CUSTOM_FIELD_LABEL) {
+          updated.label = updated.label.slice(0, MAX_CUSTOM_FIELD_LABEL);
+        }
+        if (typeof updated.value === "string" && updated.value.length > MAX_CUSTOM_FIELD_VALUE) {
+          updated.value = updated.value.slice(0, MAX_CUSTOM_FIELD_VALUE);
+        }
+        return updated;
+      }),
     }));
   };
 
@@ -450,7 +472,7 @@ export function InvoiceEditor({
 
 
   return (
-    <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-3 sm:py-6">
+    <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-3 sm:py-6 print:p-0 print:m-0 print:max-w-none">
       {/* Smooth Animated Toast Notification (Top Right) */}
       <ToastNotification toast={toast} onClose={() => setToast(null)} />
 
@@ -744,7 +766,7 @@ export function InvoiceEditor({
       )}
 
       {/* Main Grid: Form on Left (7 cols), Sticky Preview on Right (5 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start w-full min-w-0 max-w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start w-full min-w-0 max-w-full print:block print:w-full print:m-0 print:p-0">
         {/* Left: Form Editor (no-print) */}
         <div
           className={`no-print lg:col-span-7 space-y-6 w-full min-w-0 ${
@@ -962,6 +984,15 @@ export function InvoiceEditor({
               </button>
             </div>
 
+            {/* Field Names / Column Headers for Line Items (Desktop/Tablet) */}
+            <div className="hidden sm:grid sm:grid-cols-12 sm:gap-3 px-3.5 py-2 rounded-xl bg-slate-100/90 border border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 items-center">
+              <div className="sm:col-span-5">Item & Description</div>
+              <div className="sm:col-span-2 text-center">Qty</div>
+              <div className="sm:col-span-2 text-right">Price ($)</div>
+              <div className="sm:col-span-2 text-right">Total ($)</div>
+              <div className="sm:col-span-1 text-right pr-1">Action</div>
+            </div>
+
             <div className="space-y-3">
               {formData.items.map((item, index) => {
                 const calculatedItem = calculatedTotals.items[index];
@@ -972,7 +1003,7 @@ export function InvoiceEditor({
                     key={index}
                     className="p-3 sm:p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition-colors space-y-2.5 sm:space-y-0 sm:grid sm:grid-cols-12 sm:gap-3 sm:items-center"
                   >
-                    <div className="w-full sm:col-span-6">
+                    <div className="w-full sm:col-span-5">
                       <input
                         type="text"
                         placeholder="Description of item or service *"
@@ -991,6 +1022,7 @@ export function InvoiceEditor({
                           <input
                             type="number"
                             min="0.001"
+                            max="999999"
                             step="any"
                             onKeyDown={(e) => {
                               if (e.key === "-") e.preventDefault();
@@ -1015,6 +1047,7 @@ export function InvoiceEditor({
                           <input
                             type="number"
                             min="0"
+                            max="999999999"
                             step="any"
                             onKeyDown={(e) => {
                               if (e.key === "-") e.preventDefault();
@@ -1033,16 +1066,19 @@ export function InvoiceEditor({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2.5 sm:contents pt-3.5 sm:pt-0">
-                        <div className="sm:col-span-1 text-right font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap">
-                          ${lineTotal.toFixed(2)}
+                      <div className="flex items-center gap-2 sm:contents pt-3.5 sm:pt-0 min-w-0">
+                        <div
+                          className="sm:col-span-2 text-right font-bold font-mono text-slate-900 text-xs sm:text-sm truncate min-w-0"
+                          title={formatCurrency(lineTotal)}
+                        >
+                          {formatCurrency(lineTotal)}
                         </div>
 
-                        <div className="sm:col-span-1 text-right flex-shrink-0">
+                        <div className="sm:col-span-1 text-right flex-shrink-0 flex justify-end">
                           <button
                             type="button"
                             onClick={() => removeItem(index)}
-                            className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                             title="Remove item"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1138,7 +1174,7 @@ export function InvoiceEditor({
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-slate-600 font-semibold">
-                      Subtotal: ${calculatedTotals.subtotal.toFixed(2)}
+                      Subtotal: {formatCurrency(calculatedTotals.subtotal)}
                     </span>
                     <span className="font-bold text-rose-700 bg-rose-100/90 px-2.5 py-1 rounded-md border border-rose-300">
                       Grand Total: Invalid
@@ -1149,22 +1185,22 @@ export function InvoiceEditor({
                 <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5 text-xs font-mono text-slate-700">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-slate-500 whitespace-nowrap">
-                      Subtotal: <strong className="text-slate-900">${calculatedTotals.subtotal.toFixed(2)}</strong>
+                      Subtotal: <strong className="text-slate-900">{formatCurrency(calculatedTotals.subtotal)}</strong>
                     </span>
                     {calculatedTotals.discount_amount > 0 && (
                       <span className="text-emerald-700 whitespace-nowrap">
-                        Discount: <strong>-${calculatedTotals.discount_amount.toFixed(2)}</strong>
+                        Discount: <strong>-{formatCurrency(calculatedTotals.discount_amount)}</strong>
                       </span>
                     )}
                     <span className="text-slate-500 whitespace-nowrap">
-                      Taxable: <strong className="text-slate-900">${calculatedTotals.taxable_amount.toFixed(2)}</strong>
+                      Taxable: <strong className="text-slate-900">{formatCurrency(calculatedTotals.taxable_amount)}</strong>
                     </span>
                     <span className="text-slate-500 whitespace-nowrap">
-                      Tax ({calculatedTotals.tax_rate}%): <strong className="text-slate-900">${calculatedTotals.tax_amount.toFixed(2)}</strong>
+                      Tax ({calculatedTotals.tax_rate}%): <strong className="text-slate-900">{formatCurrency(calculatedTotals.tax_amount)}</strong>
                     </span>
                   </div>
                   <span className="font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200 whitespace-nowrap ml-auto">
-                    Grand Total: ${calculatedTotals.grand_total.toFixed(2)}
+                    Grand Total: {formatCurrency(calculatedTotals.grand_total)}
                   </span>
                 </div>
               )}
@@ -1179,18 +1215,28 @@ export function InvoiceEditor({
                   4
                 </span>
                 <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">
-                    Custom Fields
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">
+                      Custom Fields
+                    </h3>
+                    <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                      {formData.custom_fields.length}/{MAX_CUSTOM_FIELDS}
+                    </span>
+                  </div>
                   <p className="text-xs text-slate-400 mt-0.5 leading-snug">
-                    Add custom metadata (e.g. PO #, Project Code, Payment Method). Toggle visibility to hide on preview/print.
+                    Add custom metadata (max {MAX_CUSTOM_FIELDS} fields, max {MAX_CUSTOM_FIELD_LABEL} chars label, max {MAX_CUSTOM_FIELD_VALUE} chars value). Toggle visibility to hide on preview/print.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={addCustomField}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 px-2.5 py-1.5 rounded-lg hover:bg-indigo-50 border border-indigo-100 sm:border-transparent transition-colors flex-shrink-0 cursor-pointer"
+                disabled={formData.custom_fields.length >= MAX_CUSTOM_FIELDS}
+                className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition-colors flex-shrink-0 ${
+                  formData.custom_fields.length >= MAX_CUSTOM_FIELDS
+                    ? "text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed opacity-60"
+                    : "text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-100 sm:border-transparent cursor-pointer"
+                }`}
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Field</span>
@@ -1202,22 +1248,37 @@ export function InvoiceEditor({
               <span className="text-slate-400 font-medium">Quick Presets:</span>
               <button
                 type="button"
+                disabled={formData.custom_fields.length >= MAX_CUSTOM_FIELDS}
                 onClick={() => addCustomFieldWithPreset("PO Number", "PO-84920")}
-                className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                className={`px-2.5 py-1 rounded-full text-slate-600 transition-colors ${
+                  formData.custom_fields.length >= MAX_CUSTOM_FIELDS
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+                    : "bg-slate-100 hover:bg-slate-200 cursor-pointer"
+                }`}
               >
                 + PO Number
               </button>
               <button
                 type="button"
+                disabled={formData.custom_fields.length >= MAX_CUSTOM_FIELDS}
                 onClick={() => addCustomFieldWithPreset("Project Code", "WEB-2026")}
-                className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                className={`px-2.5 py-1 rounded-full text-slate-600 transition-colors ${
+                  formData.custom_fields.length >= MAX_CUSTOM_FIELDS
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+                    : "bg-slate-100 hover:bg-slate-200 cursor-pointer"
+                }`}
               >
                 + Project Code
               </button>
               <button
                 type="button"
+                disabled={formData.custom_fields.length >= MAX_CUSTOM_FIELDS}
                 onClick={() => addCustomFieldWithPreset("Payment Method", "Bank Transfer")}
-                className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                className={`px-2.5 py-1 rounded-full text-slate-600 transition-colors ${
+                  formData.custom_fields.length >= MAX_CUSTOM_FIELDS
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+                    : "bg-slate-100 hover:bg-slate-200 cursor-pointer"
+                }`}
               >
                 + Payment Method
               </button>
@@ -1235,25 +1296,37 @@ export function InvoiceEditor({
                     className="p-2.5 sm:p-3 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2"
                   >
                     <div className="grid grid-cols-2 gap-2 flex-1 sm:flex sm:items-center sm:gap-2">
-                      <input
-                        type="text"
-                        placeholder="Label (e.g. PO #)"
-                        value={field.label}
-                        onChange={(e) =>
-                          updateCustomField(field.id, { label: e.target.value })
-                        }
-                        className="w-full sm:w-1/3 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
+                      <div className="relative w-full sm:w-1/3">
+                        <input
+                          type="text"
+                          placeholder="Label (max 40 chars)"
+                          maxLength={MAX_CUSTOM_FIELD_LABEL}
+                          value={field.label}
+                          onChange={(e) =>
+                            updateCustomField(field.id, { label: e.target.value })
+                          }
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                        />
+                        <span className="absolute right-2 top-2 text-[9px] text-slate-400 select-none pointer-events-none hidden sm:inline">
+                          {field.label.length}/{MAX_CUSTOM_FIELD_LABEL}
+                        </span>
+                      </div>
 
-                      <input
-                        type="text"
-                        placeholder="Value (e.g. PO-84920)"
-                        value={field.value}
-                        onChange={(e) =>
-                          updateCustomField(field.id, { value: e.target.value })
-                        }
-                        className="w-full sm:flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
+                      <div className="relative w-full sm:flex-1">
+                        <input
+                          type="text"
+                          placeholder="Value (max 80 chars)"
+                          maxLength={MAX_CUSTOM_FIELD_VALUE}
+                          value={field.value}
+                          onChange={(e) =>
+                            updateCustomField(field.id, { value: e.target.value })
+                          }
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                        />
+                        <span className="absolute right-2 top-2 text-[9px] text-slate-400 select-none pointer-events-none hidden sm:inline">
+                          {field.value.length}/{MAX_CUSTOM_FIELD_VALUE}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between sm:justify-end gap-1.5 pt-1.5 sm:pt-0 border-t border-slate-200/60 sm:border-none">
@@ -1322,7 +1395,7 @@ export function InvoiceEditor({
 
         {/* Right: Sticky Live Preview (Full-width on print) */}
         <div
-          className={`lg:col-span-5 sticky top-28 print:static print:w-full print:block transition-all w-full min-w-0 max-w-full ${
+          className={`lg:col-span-5 sticky top-28 print:static print:w-full print:block print:m-0 print:p-0 transition-all w-full min-w-0 max-w-full ${
             activeMobileTab === "preview" ? "block" : "hidden lg:block"
           }`}
         >
@@ -1442,7 +1515,7 @@ export function InvoiceEditor({
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Total Amount:</span>
                 <span className="font-bold text-indigo-700">
-                  ${calculatedTotals.grand_total.toFixed(2)}
+                  {formatCurrency(calculatedTotals.grand_total)}
                 </span>
               </div>
             </div>

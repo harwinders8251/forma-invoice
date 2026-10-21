@@ -29,6 +29,7 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    display: block !important;
   }
 
   .no-print,
@@ -36,14 +37,33 @@ body {
     display: none !important;
   }
 
+  /* Reset outer layout wrappers so print page is not constrained by screen grid/padding */
+  main,
+  main > div,
+  .max-w-7xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .grid {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
   .print-container {
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 6px 12px !important;
     box-shadow: none !important;
     border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
   }
 
   .print\:shadow-none {
@@ -68,3 +88,4 @@ body {
     page-break-after: auto;
   }
 }
+

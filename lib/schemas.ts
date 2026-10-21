@@ -6,12 +6,12 @@ export const CustomFieldSchema = z.object({
     .string()
     .trim()
     .min(1, "Field label cannot be empty")
-    .max(80, "Label cannot exceed 80 characters"),
+    .max(40, "Label cannot exceed 40 characters"),
   value: z
     .string()
     .trim()
     .min(1, "Field value cannot be empty")
-    .max(300, "Value cannot exceed 300 characters"),
+    .max(80, "Value cannot exceed 80 characters"),
   isVisible: z.boolean().default(true),
 });
 
@@ -107,6 +107,7 @@ export const InvoiceFormSchema = z
       .min(1, "At least one line item is required"),
     custom_fields: z
       .array(CustomFieldSchema)
+      .max(10, "Cannot add more than 10 custom fields")
       .default([]),
   })
   .refine(

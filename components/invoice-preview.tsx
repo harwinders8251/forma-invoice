@@ -61,7 +61,7 @@ export function InvoicePreview({
 
   return (
     <div
-      className={`print-container bg-white rounded-2xl border shadow-xl print:shadow-none print:border-none p-3.5 sm:p-6 md:p-8 text-slate-900 transition-all font-sans relative overflow-hidden w-full max-w-full min-w-0 ${
+      className={`print-container bg-white rounded-2xl border shadow-xl print:shadow-none print:border-none print:overflow-visible print:p-2 sm:print:p-3 p-3.5 sm:p-6 md:p-8 text-slate-900 transition-all font-sans relative overflow-hidden w-full max-w-full min-w-0 ${
         totals.isInvalid ? "border-rose-300 ring-1 ring-rose-200" : "border-slate-200/90"
       }`}
     >
@@ -89,7 +89,7 @@ export function InvoicePreview({
         <div className="w-full sm:w-auto sm:flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span
-              className={`text-[11px] uppercase tracking-widest font-bold block ${
+              className={`text-[11px] uppercase tracking-widest font-bold block pl-0.5 print:pl-1 ${
                 totals.isInvalid ? "text-rose-600" : "text-indigo-600"
               }`}
             >
@@ -172,8 +172,8 @@ export function InvoicePreview({
             <div className="grid grid-cols-1 sm:grid-cols-1 gap-1.5 sm:gap-1">
               {visibleCustomFields.map((field) => (
                 <div key={field.id} className="text-xs leading-relaxed flex items-center justify-between sm:justify-end gap-2">
-                  <span className="text-slate-500 font-medium">{field.label}:</span>
-                  <span className="font-semibold text-slate-800 break-words">{field.value}</span>
+                  <span className="text-slate-500 font-medium break-all max-w-[45%] text-left sm:text-right">{field.label}:</span>
+                  <span className="font-semibold text-slate-800 break-all text-right">{field.value}</span>
                 </div>
               ))}
             </div>
@@ -225,8 +225,8 @@ export function InvoicePreview({
 
       {/* Financial Calculations Summary */}
       <div className="py-6 border-b border-slate-200 flex justify-end w-full">
-        <div className="w-full sm:w-80 space-y-2.5 text-xs">
-          <div className="flex justify-between text-slate-600">
+        <div className="w-full sm:w-80 space-y-2 text-xs">
+          <div className="flex justify-between text-slate-600 px-3.5">
             <span>Subtotal:</span>
             <span className="font-semibold text-slate-900 font-mono">
               {formatCurrency(totals.subtotal)}
@@ -245,16 +245,16 @@ export function InvoicePreview({
                 </p>
               </div>
 
-              <div className="flex justify-between text-slate-400 text-xs italic">
+              <div className="flex justify-between text-slate-400 text-xs italic px-3.5">
                 <span>Taxable Subtotal:</span>
                 <span>Blocked</span>
               </div>
-              <div className="flex justify-between text-slate-400 text-xs italic">
+              <div className="flex justify-between text-slate-400 text-xs italic px-3.5">
                 <span>Tax ({totals.tax_rate}%):</span>
                 <span>Blocked</span>
               </div>
 
-              <div className="pt-3 border-t-2 border-rose-300 flex justify-between items-baseline">
+              <div className="pt-3 border-t-2 border-rose-300 flex justify-between items-baseline px-3.5">
                 <span className="text-sm font-bold text-rose-900 uppercase tracking-tight">
                   Grand Total (USD):
                 </span>
@@ -266,7 +266,7 @@ export function InvoicePreview({
           ) : (
             <>
               {totals.discount_amount > 0 && (
-                <div className="flex justify-between text-emerald-700 bg-emerald-50/60 px-2 py-1 rounded">
+                <div className="flex justify-between text-emerald-700 bg-emerald-50/60 px-3.5 py-1 rounded">
                   <span>Fixed Discount:</span>
                   <span className="font-semibold font-mono">
                     -{formatCurrency(totals.discount_amount)}
@@ -275,7 +275,7 @@ export function InvoicePreview({
               )}
 
               {totals.discount_amount > 0 && (
-                <div className="flex justify-between text-slate-500 text-[11px]">
+                <div className="flex justify-between text-slate-500 text-[11px] px-3.5">
                   <span>Taxable Subtotal:</span>
                   <span className="font-medium font-mono">
                     {formatCurrency(totals.taxable_amount)}
@@ -284,7 +284,7 @@ export function InvoicePreview({
               )}
 
               {totals.tax_rate > 0 && (
-                <div className="flex justify-between text-slate-600">
+                <div className="flex justify-between text-slate-600 px-3.5">
                   <span>Tax ({totals.tax_rate}%):</span>
                   <span className="font-semibold text-slate-900 font-mono">
                     {formatCurrency(totals.tax_amount)}

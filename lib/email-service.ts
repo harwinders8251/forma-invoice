@@ -51,7 +51,7 @@ function renderInvoiceEmailHtml(invoice: InvoiceRecord, customMessage?: string):
     .filter((cf) => cf.isVisible && cf.value?.trim())
     .map(
       (cf) => `
-      <div style="font-size: 12px; margin-bottom: 4px;">
+      <div style="font-size: 12px; margin-bottom: 4px; word-break: break-word;">
         <span style="color: #64748b;">${escapeHtml(cf.label)}:</span>
         <strong style="color: #0f172a; margin-left: 4px;">${escapeHtml(cf.value)}</strong>
       </div>

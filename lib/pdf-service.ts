@@ -78,7 +78,7 @@ export async function generateInvoicePdfBuffer(invoice: InvoiceRecord): Promise<
         let fieldY = currentY;
         for (const cf of visibleFields) {
           doc.fillColor("#475569").fontSize(8).font("Helvetica");
-          doc.text(`${cf.label}: ${cf.value}`, 350, fieldY);
+          doc.text(`${cf.label}: ${cf.value}`, 350, fieldY, { width: 205, align: "right" });
           fieldY += 12;
         }
         currentY = Math.max(currentY + 25, fieldY);

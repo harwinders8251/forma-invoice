@@ -132,11 +132,29 @@ describe("InvoiceFormSchema Validation", () => {
     expect(
       CustomFieldSchema.safeParse({
         id: "1",
-        label: "",
+        label: "a".repeat(41),
         value: "Val",
         isVisible: true,
       }).success
     ).toBe(false);
+
+    expect(
+      CustomFieldSchema.safeParse({
+        id: "1",
+        label: "Valid Label",
+        value: "a".repeat(81),
+        isVisible: true,
+      }).success
+    ).toBe(false);
+
+    expect(
+      CustomFieldSchema.safeParse({
+        id: "1",
+        label: "a".repeat(40),
+        value: "b".repeat(80),
+        isVisible: true,
+      }).success
+    ).toBe(true);
   });
 });
 

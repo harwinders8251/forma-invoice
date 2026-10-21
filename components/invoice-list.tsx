@@ -26,8 +26,8 @@ import {
 import { formatCurrency } from "@/lib/invoice-calculations";
 import { deleteInvoiceAction } from "@/app/actions/invoices";
 import { ToastNotification, ToastData } from "./toast-notification";
-import { SendEmailModal } from "./send-email-modal";
-import { EmailHistoryModal } from "./email-history-modal";
+import { SendEmailModal, EmailLogBrief } from "./send-email-modal";
+import { EmailHistoryModal, EmailLogEntry } from "./email-history-modal";
 
 interface InvoiceListItem {
   id: string;
@@ -45,7 +45,7 @@ interface InvoiceListItem {
   created_at: string;
   email_logs?: Array<{
     id: string;
-    recipient_email?: string;
+    recipient_email: string;
     status: string;
     created_at: string;
     error_message?: string | null;
@@ -994,7 +994,7 @@ export function InvoiceList({
           businessName={sendModalInvoice.business_name}
           customerName={sendModalInvoice.customer_name}
           customerEmail={sendModalInvoice.customer_email}
-          previousLogs={sendModalInvoice.email_logs?.map((l) => ({
+          previousLogs={sendModalInvoice.email_logs?.map((l): EmailLogBrief => ({
             id: l.id,
             recipient_email: l.recipient_email || "",
             status: l.status,
@@ -1018,7 +1018,7 @@ export function InvoiceList({
           invoiceId={historyModalInvoice.id}
           invoiceNumber={historyModalInvoice.invoice_number}
           grandTotal={historyModalInvoice.grand_total}
-          initialLogs={historyModalInvoice.email_logs?.map((l) => ({
+          initialLogs={historyModalInvoice.email_logs?.map((l): EmailLogEntry => ({
             id: l.id,
             invoice_id: historyModalInvoice.id,
             recipient_email: l.recipient_email || "",
