@@ -994,7 +994,13 @@ export function InvoiceList({
           businessName={sendModalInvoice.business_name}
           customerName={sendModalInvoice.customer_name}
           customerEmail={sendModalInvoice.customer_email}
-          previousLogs={sendModalInvoice.email_logs}
+          previousLogs={sendModalInvoice.email_logs?.map((l) => ({
+            id: l.id,
+            recipient_email: l.recipient_email || "",
+            status: l.status,
+            created_at: l.created_at,
+            error_message: l.error_message,
+          }))}
           onSuccess={handleEmailSent}
           onViewHistory={() => {
             const current = sendModalInvoice;
@@ -1012,7 +1018,15 @@ export function InvoiceList({
           invoiceId={historyModalInvoice.id}
           invoiceNumber={historyModalInvoice.invoice_number}
           grandTotal={historyModalInvoice.grand_total}
-          initialLogs={historyModalInvoice.email_logs}
+          initialLogs={historyModalInvoice.email_logs?.map((l) => ({
+            id: l.id,
+            invoice_id: historyModalInvoice.id,
+            recipient_email: l.recipient_email || "",
+            status: l.status,
+            provider_message_id: null,
+            error_message: l.error_message || null,
+            created_at: l.created_at,
+          }))}
           onOpenSendModal={() => {
             const current = historyModalInvoice;
             setHistoryModalInvoice(null);

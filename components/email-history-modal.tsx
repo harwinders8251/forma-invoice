@@ -6,11 +6,11 @@ import { formatCurrency } from "@/lib/invoice-calculations";
 
 export interface EmailLogEntry {
   id: string;
-  invoice_id: string | null;
+  invoice_id?: string | null;
   recipient_email: string;
   status: string;
-  provider_message_id: string | null;
-  error_message: string | null;
+  provider_message_id?: string | null;
+  error_message?: string | null;
   created_at: string;
 }
 
