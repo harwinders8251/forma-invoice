@@ -32,19 +32,20 @@ It provides an end-to-end workflow for businesses to create, manage, preview, ex
 ### 2. Live Invoice Editor (`/invoices/new` and `/invoices/[id]`)
 - **Business Details**: Name, email, and billing address.
 - **Customer Details**: Name, email, and shipping/billing address.
-- **Invoice Meta**: Unique invoice number with automated sequential generator (`INV-YYYY-XXXX`), issue date, and due date.
-- **Dynamic Line Items**: Add, edit, and remove line items with live unit price, quantity, and auto-computed line totals.
+- **Invoice Meta**: Unique invoice number with automated sequential generator (`INV-YYYY-XXXX`), issue date, and due date (with non-wrapping hyphens across all screen sizes).
+- **Dynamic Line Items**: Add, edit, and remove line items with live unit price, quantity, column headers, and auto-computed line totals.
 - **Financial Adjustments**: Fixed discount amount ($) and percentage tax rate (%).
-- **Custom Metadata Fields**: Add custom fields (e.g., PO Number, Project Code, Payment Method) with individual show/hide visibility toggles.
+- **Custom Metadata Fields**: Add custom fields (e.g., PO Number, Project Code, Payment Method) with individual show/hide visibility toggles, strictly constrained to max 10 fields per invoice, 40 characters label, and 80 characters value with live input character counters.
 - **Notes & Payment Terms**: Custom terms, bank transfer details, or thank-you notes.
 
 ### 3. Real-Time Side-by-Side Preview & PDF Export
 - Desktop editor displays a live invoice canvas updating with every keystroke.
-- **Print / Save as PDF**: Pure CSS `@media print` styling that hides controls, buttons, and navigation, formatting the document directly for standard A4 portrait printing or PDF saving via the browser print dialog.
+- **Print / Save as PDF**: Pure CSS `@media print` styling that hides controls, buttons, and navigation, formatting the document directly for standard A4 portrait printing or PDF saving via the browser print dialog. Includes glyph overhang protection (`overflow: visible`, `pl-1`) and full layout grid resets.
+- **Server-Side PDF Generation**: Direct PDF export via `GET /api/invoices/[id]/pdf` with PDFKit.
 - Hidden custom fields are excluded from both the preview and the printed document.
 
 ### 4. Server-Side Email Delivery (`POST /api/invoices/[id]/send`)
-- Dispatches invoices directly to clients via Resend with a clean, branded HTML email template.
+- Dispatches invoices directly to clients via Resend with a clean, branded HTML email template and PDF attachment.
 - Records delivery status (`sent` or `failed`) with provider message IDs in the `invoice_email_logs` table.
 - Client credentials and API keys are kept strictly on the server.
 
@@ -215,4 +216,6 @@ npm run test:supabase
 ## ⏱️ Project Summary
 
 - **Development Methodology**: Test-driven financial calculations, version-controlled Supabase migrations, strict Next.js App Router conventions.
-- **Test Results**: 16/16 Unit Tests Passed, 0 Lint Errors, Production Build Successful.
+- **Test Results**: 30/30 Unit Tests Passed (`vitest`), 0 TypeScript Errors (`tsc --noEmit`), 0 Lint Errors, Production Build Successful.
+- **Deployment**: Zero-error production build verified on Next.js 16 (App Router) & Netlify.
+
