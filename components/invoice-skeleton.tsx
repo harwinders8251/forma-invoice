@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, FileText } from "lucide-react";
 
 export function InvoiceSkeleton() {
   return (
@@ -43,7 +43,7 @@ export function InvoiceSkeleton() {
         <div>
           <h2 className="text-base font-semibold text-slate-900 flex items-center justify-center sm:justify-start gap-1.5">
             <span>Loading your invoice</span>
-            <Sparkles className="w-4 h-4 text-indigo-500" />
+            <FileText className="w-4 h-4 text-indigo-600" />
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Fetching invoice details, line items, and live calculations...
